@@ -129,7 +129,6 @@ set git_remote [require_input_or_default "Git remote: " "origin"]
 set git_branch [require_input_or_default "Git branch: " "master"]
 set git_remote_branch [require_input_or_default "Git remote branch: " "master"]
 
-set old_version [exec pomVersion]
 set git_current_branch [exec git rev-parse --abbrev-ref HEAD]
 set release_msg "\[release $release_version by ezrelease\]"
 set release_tag "v$release_version"
