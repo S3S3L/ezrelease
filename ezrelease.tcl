@@ -150,7 +150,7 @@ set release_version [require_input "Release version: "]
 set is_submodule [choose "Is project a git submodule project"]
 set git_remote [require_input_or_default "Git remote: " "origin"]
 set git_branch [require_input_or_default "Git branch: " "master"]
-set git_remote_branch [require_input_or_default "Git remote branch: " $git_remote_branch]
+set git_remote_branch [require_input_or_default "Git remote branch: " $git_branch]
 
 set git_current_branch [exec git rev-parse --abbrev-ref HEAD]
 set release_msg "\[release $release_version by ezrelease\]"
