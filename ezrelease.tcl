@@ -150,7 +150,7 @@ set release_version [require_input "Release version: "]
 set is_submodule [choose "Is project a git submodule project"]
 set git_remote [require_input_or_default "Git remote: " "origin"]
 set git_branch [require_input_or_default "Git branch: " "master"]
-set git_remote_branch [require_input_or_default "Git remote branch: " "master"]
+set git_remote_branch [require_input_or_default "Git remote branch: " $git_remote_branch]
 
 set git_current_branch [exec git rev-parse --abbrev-ref HEAD]
 set release_msg "\[release $release_version by ezrelease\]"
@@ -197,6 +197,7 @@ if { $is_push } {
 
 set new_develop_version [require_input "New develop version: "]
 set develop_branch [require_input_or_default "Develop branch: " "dev"]
+set remote_develop_branch [require_input_or_default "Remote develop branch: " $develop_branch]
 
 set git_current_branch [exec git rev-parse --abbrev-ref HEAD]
 set develop_msg "\[new develop version $new_develop_version by ezrelease\]"
@@ -226,8 +227,8 @@ git_commit $develop_msg
 # push commit
 if { $is_push } {
     if { $is_submodule} {
-        git_push_submodule $git_remote "$git_branch:$git_remote_branch"
+        git_push_submodule $git_remote "$git_branch:$remote_develop_branch"
     }
     
-    git_push $git_remote "$git_branch:$git_remote_branch"
+    git_push $git_remote "$git_branch:$remote_develop_branch"
 }
