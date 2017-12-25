@@ -97,11 +97,27 @@ proc git_tag_submodule { _tag _msg } {
 }
 
 proc git_push_tag { _remote _tag } {
-    exec git push $_remote $_tag >@ stdout
+    set code [catch { exec git push $_remote $_tag >@ stdout } ""]
+    switch -regexp $code {
+        [01] {
+            return true
+        }
+        default {
+            exit 1
+        }
+    }
 }
 
 proc git_push_tag_submodule { _remote _tag } {
-    exec git submodule foreach git push $_remote $_tag >@ stdout
+    set code [catch { exec git submodule foreach git push $_remote $_tag >@ stdout } ""]
+    switch -regexp $code {
+        [01] {
+            return true
+        }
+        default {
+            exit 1
+        }
+    }
 }
 
 proc git_push { _remote _branch } {
@@ -117,7 +133,7 @@ proc git_push { _remote _branch } {
 }
 
 proc git_push_submodule { _remote _branch } {
-    set code [catch { exec git submodule foreach git push $_remote $_branch >@ stdout }]
+    set code [catch { exec git submodule foreach git push $_remote $_branch >@ stdout } ""]
     switch -regexp $code {
         [01] {
             return true
@@ -129,11 +145,27 @@ proc git_push_submodule { _remote _branch } {
 }
 
 proc git_change_branch { _branch } {
-    exec git checkout $_branch >@ stdout
+    set code [catch { exec git checkout $_branch >@ stdout } ""]
+    switch -regexp $code {
+        [01] {
+            return true
+        }
+        default {
+            exit 1
+        }
+    }
 }
 
 proc git_change_branch_submodule { _branch } {
-    exec git submodule foreach git checkout $_branch >@ stdout
+    set code [catch { exec git submodule foreach git checkout $_branch >@ stdout } ""]
+    switch -regexp $code {
+        [01] {
+            return true
+        }
+        default {
+            exit 1
+        }
+    }
 }
 
 if { ![is_all_change_commited] } {
@@ -203,12 +235,12 @@ set git_current_branch [exec git rev-parse --abbrev-ref HEAD]
 set develop_msg "\[new develop version $new_develop_version by ezrelease\]"
 
 # switch to dev branch
-if { $git_current_branch ne $git_branch } {
+if { $git_current_branch ne $develop_branch } {
     if { $is_submodule } {
-        git_change_branch_submodule $git_branch
+        git_change_branch_submodule $develop_branch
     }
 
-    git_change_branch $git_branch
+    git_change_branch $develop_branch
 }
 
 # update to new dev version
@@ -227,8 +259,8 @@ git_commit $develop_msg
 # push commit
 if { $is_push } {
     if { $is_submodule} {
-        git_push_submodule $git_remote "$git_branch:$remote_develop_branch"
+        git_push_submodule $git_remote "$develop_branch:$remote_develop_branch"
     }
     
-    git_push $git_remote "$git_branch:$remote_develop_branch"
+    git_push $git_remote "$develop_branch:$remote_develop_branch"
 }
