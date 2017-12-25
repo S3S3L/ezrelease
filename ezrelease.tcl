@@ -74,6 +74,10 @@ proc is_all_change_commited {} {
     }
 }
 
+proc mvn_deploy { } {
+    exec mvn clean deploy >@ stdout
+}
+
 proc git_commit { _msg } {
     exec git add .
     exec git commit -m $_msg >@ stdout
@@ -89,37 +93,56 @@ proc git_tag { _tag _msg } {
 }
 
 proc git_tag_submodule { _tag _msg } {
-    exec git submodule foreach git tag -a $_tag -m $_msg
+    exec git submodule foreach git tag -a $_tag -m $_msg >@ stdout
 }
 
 proc git_push_tag { _remote _tag } {
-    exec git push $_remote $_tag
+    exec git push $_remote $_tag >@ stdout
 }
 
 proc git_push_tag_submodule { _remote _tag } {
-    exec git submodule foreach git push $_remote $_tag
+    exec git submodule foreach git push $_remote $_tag >@ stdout
 }
 
 proc git_push { _remote _branch } {
-    exec git push $_remote $_branch
+    set code [catch { exec git push $_remote $_branch >@ stdout } ""]
+    switch -regexp $code {
+        [01] {
+            return true
+        }
+        default {
+            exit 1
+        }
+    }
 }
 
 proc git_push_submodule { _remote _branch } {
-    exec git submodule foreach git push $_remote $_branch
+    set code [catch { exec git submodule foreach git push $_remote $_branch >@ stdout }]
+    switch -regexp $code {
+        [01] {
+            return true
+        }
+        default {
+            exit 1
+        }
+    }
 }
 
 proc git_change_branch { _branch } {
-    exec git checkout $_branch
+    exec git checkout $_branch >@ stdout
 }
 
 proc git_change_branch_submodule { _branch } {
-    exec git submodule foreach git checkout $_branch
+    exec git submodule foreach git checkout $_branch >@ stdout
 }
 
 if { ![is_all_change_commited] } {
     send_user "${red}Can not release when there are some changes not commited.\n${non_color}"
     exit 0
 }
+
+###########################################################################
+# release
 
 set home [pwd]
 set pom_location [require_input "Parent pom location: "]
@@ -141,27 +164,36 @@ if { $git_current_branch ne $git_branch } {
     git_change_branch $git_branch
 }
 
+# update version
 cd $pom_location
 version_update $release_version
 
 cd $home
 
+# commit & tag
+set release_tag "v$release_version"
 if { $is_submodule } {
     git_commit_submodule $release_msg
-    git_tag_submodule "v$release_version" $release_msg
+    git_tag_submodule $release_tag $release_msg
 }
 
 git_commit $release_msg
-git_tag "v$release_version" $release_msg
+git_tag $release_tag $release_msg
 
+# push commit & tag
 set is_push [choose "Push commit"]
 if { $is_push } {
     if { $is_submodule} {
         git_push_submodule $git_remote "$git_branch:$git_remote_branch"
+        git_push_tag_submodule $git_remote $release_tag
     }
     
     git_push $git_remote "$git_branch:$git_remote_branch"
+    git_push_tag $git_remote $release_tag
 }
+
+##################################################################
+# new dev version
 
 set new_develop_version [require_input "New develop version: "]
 set develop_branch [require_input_or_default "Develop branch: " "dev"]
@@ -169,6 +201,7 @@ set develop_branch [require_input_or_default "Develop branch: " "dev"]
 set git_current_branch [exec git rev-parse --abbrev-ref HEAD]
 set develop_msg "\[new develop version $new_develop_version by ezrelease\]"
 
+# switch to dev branch
 if { $git_current_branch ne $git_branch } {
     if { $is_submodule } {
         git_change_branch_submodule $git_branch
@@ -177,17 +210,20 @@ if { $git_current_branch ne $git_branch } {
     git_change_branch $git_branch
 }
 
+# update to new dev version
 cd $pom_location
 version_update $new_develop_version
 
 cd $home
 
+# commit
 if { $is_submodule } {
     git_commit_submodule $develop_msg
 }
 
 git_commit $develop_msg
 
+# push commit
 if { $is_push } {
     if { $is_submodule} {
         git_push_submodule $git_remote "$git_branch:$git_remote_branch"
