@@ -199,8 +199,10 @@ if { $git_current_branch ne $git_branch } {
 # update version
 cd $pom_location
 version_update $release_version
+mvn_deploy
 
 cd $home
+mvn_deploy
 
 # commit & tag
 set release_tag "v$release_version"
@@ -246,8 +248,10 @@ if { $git_current_branch ne $develop_branch } {
 # update to new dev version
 cd $pom_location
 version_update $new_develop_version
+mvn_deploy
 
 cd $home
+mvn_deploy
 
 # commit
 if { $is_submodule } {
