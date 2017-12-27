@@ -75,7 +75,7 @@ proc is_all_change_commited {} {
 }
 
 proc mvn_deploy { } {
-    exec mvn clean deploy >@ stdout
+    catch { exec mvn clean deploy >@ stdout }
 }
 
 proc git_commit { _msg } {
