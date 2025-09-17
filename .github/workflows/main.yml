@@ -51,8 +51,6 @@ jobs:
           name: Release ${{ steps.tag.outputs.new_tag }}
           body: ${{ steps.tag.outputs.changelog }}
           files: |
-            workflows/setup-git-environment-for-bug-fix.md
-            workflows/fix-accessibility-bugs.md
-            scripts/setup.sh
+            ezrelease.tcl
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
